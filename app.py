@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import streamlit as st
 from auth.auth_utils import create_users_table, add_user, login_user
 from cancers import breast_cancer, lung_cancer, liver_cancer, skin_cancer, colorectal_cancer
@@ -58,3 +59,6 @@ def app_dashboard():
 
 if __name__ == '__main__':
     main()
+=======
+
+>>>>>>> eee896f8e4e7b8e8e434dda6493640126ee77998
