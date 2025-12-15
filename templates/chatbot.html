@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI ChatBot 🤖</title>
+<style>
+  body {
+    margin: 0;
+    font-family: 'Segoe UI', sans-serif;
+    height: 100vh;
+    display: flex;
+    background: url("{{ url_for('static', filename='baground.jpg') }}") no-repeat center center fixed;
+    background-size: cover;
+    color: #333;
+  }
+
+  /* Sidebar (History) */
+  .sidebar {
+    width: 260px;
+    background: rgba(176, 206, 224, 0.95); /* pastel blue */
+    padding: 15px;
+    display: flex;
+    flex-direction: column;
+    border-right: 1px solid #ccc;
+    box-sizing: border-box;
+  }
+
+  .history-header {
+    background: #ffe8f0; /* pastel pink */
+    color: #333;
+    font-weight: bold;
+    font-size: 18px;
+    text-align: center;
+    padding: 10px;
+    border-radius: 12px;
+    margin-bottom: 12px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  }
+
+  .history {
+    flex: 1;
+    overflow-y: auto;
+  }
+
+  .history-item {
+    background: #ffe8f0; /* pastel pink */
+    color: #333;
+    margin-bottom: 10px;
+    padding: 10px;
+    border-radius: 12px;
+    cursor: pointer;
+    font-size: 14px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.08);
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+
+  .history-item:hover {
+    transform: translateX(3px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.12);
+  }
+
+  /* Chat Container */
+  .chat-container {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    background: rgba(240, 244, 248, 0.95);
+    border-radius: 0 16px 16px 0;
+  }
+
+  .chat-header {
+    background: #b0cee0; /* pastel blue */
+    color: #fff;
+    font-size: 22px;
+    font-weight: bold;
+    text-align: center;
+    padding: 16px;
+    border-bottom: 1px solid #ccc;
+    border-radius: 0 16px 0 0;
+  }
+
+  .chat-body {
+    flex: 1;
+    padding: 20px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .message {
+    margin-bottom: 15px;
+    display: flex;
+    flex-direction: column;
+    opacity: 0;
+    animation: fadeIn 0.4s forwards;
+  }
+
+  .user-msg, .bot-msg {
+    padding: 14px 20px;
+    border-radius: 20px;
+    max-width: 70%;
+    font-size: 15px;
+    line-height: 1.4;
+    box-shadow: 0 3px 6px rgba(0,0,0,0.1);
+  }
+
+  .user-msg {
+    align-self: flex-end;
+    background: #88b8d9; /* darker pastel blue */
+    color: #fff;
+    border-bottom-right-radius: 0;
+  }
+
+  .bot-msg {
+    align-self: flex-start;
+    background: #ffe8f0; /* pastel pink */
+    color: #333;
+    border-bottom-left-radius: 0;
+  }
+
+  .chat-input {
+    display: flex;
+    border-top: 1px solid #ccc;
+    padding: 12px 16px;
+    background: rgba(240, 244, 248, 0.95);
+    border-radius: 0 0 16px 0;
+  }
+
+  .chat-input input {
+    flex: 1;
+    padding: 12px 16px;
+    border-radius: 30px;
+    border: 1px solid #ccc;
+    outline: none;
+    font-size: 15px;
+    background: #fff;
+    transition: all 0.2s;
+  }
+
+  .chat-input input:focus {
+    border-color: #88b8d9;
+    box-shadow: 0 0 8px rgba(136,184,217,0.5);
+  }
+
+  .chat-input button {
+    padding: 12px 22px;
+    margin-left: 10px;
+    background: #b0cee0;
+    color: #fff;
+    border: none;
+    border-radius: 30px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: all 0.2s;
+  }
+
+  .chat-input button:hover {
+    background: #88b8d9;
+  }
+
+  @keyframes fadeIn {
+    from {opacity:0; transform: translateY(10px);}
+    to {opacity:1; transform: translateY(0);}
+  }
+</style>
+</head>
+<body>
+
+<!-- Sidebar for History -->
+<div class="sidebar">
+  <div class="history-header">💬 History</div>
+  <div class="history" id="history"></div>
+</div>
+
+<!-- Chat Section -->
+<div class="chat-container">
+  <div class="chat-header">AI ChatBot 🤖</div>
+  <div class="chat-body" id="chatBody"></div>
+  <div class="chat-input">
+    <input type="text" id="userInput" placeholder="Ask me anything...">
+    <button onclick="sendMessage()">Send</button>
+  </div>
+</div>
+
+<script>
+  const chatBody = document.getElementById('chatBody');
+  const historyDiv = document.getElementById('history');
+  let chatHistory = [];
+
+  // Format bot replies
+  function formatBotReply(text) {
+    text = text.replace(/\*\*(.*?)\*\*/g, "<b>$1</b>");
+    text = text.replace(/(?:\n|^)\*\s(.*?)(?=\n|$)/g, "<br>• $1");
+    text = text.replace(/\n/g, "<br>");
+    return text;
+  }
+
+  async function sendMessage() {
+    const input = document.getElementById('userInput');
+    const userText = input.value.trim();
+    if(!userText) return;
+
+    appendMessage(userText,'user-msg');
+    input.value = '';
+
+    let chatItem = {question:userText, answer:""};
+    chatHistory.push(chatItem);
+    updateHistory();
+
+    try {
+      const response = await fetch("/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: userText })
+      });
+
+      const data = await response.json();
+      let botResponse = data.reply ? formatBotReply(data.reply) : "⚠️ Error: " + data.error;
+      chatItem.answer = botResponse;
+      appendMessage(botResponse,'bot-msg');
+      updateHistory();
+    } catch (e) {
+      chatItem.answer = "⚠️ Server not responding.";
+      appendMessage(chatItem.answer,"bot-msg");
+      updateHistory();
+    }
+  }
+
+  function appendMessage(text,className) {
+    const msgDiv = document.createElement('div');
+    msgDiv.className = 'message';
+    msgDiv.innerHTML = `<div class="${className}">${text}</div>`;
+    chatBody.appendChild(msgDiv);
+    chatBody.scrollTop = chatBody.scrollHeight;
+  }
+
+  function updateHistory() {
+    historyDiv.innerHTML = "";
+    chatHistory.forEach((item, index) => {
+      const div = document.createElement("div");
+      div.className = "history-item";
+      div.innerText = item.question;
+      div.onclick = () => loadHistory(index);
+      historyDiv.appendChild(div);
+    });
+  }
+
+  function loadHistory(index) {
+    chatBody.innerHTML = "";
+    let item = chatHistory[index];
+    appendMessage(item.question,'user-msg');
+    if(item.answer) appendMessage(item.answer,'bot-msg');
+  }
+
+  // Press Enter to send
+  document.getElementById('userInput').addEventListener("keypress",function(e){
+    if(e.key==="Enter") sendMessage();
+  });
+</script>
+
+</body>
+</html>

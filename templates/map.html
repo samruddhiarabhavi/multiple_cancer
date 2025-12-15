@@ -1,0 +1,306 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Multiple Cancer Detection — Hospital Maps</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+  <style>
+    body,html {
+      height: 100%;
+      background: url("{{ url_for('static', filename='baground.jpg') }}") no-repeat center center fixed;
+      margin: 0;
+      font-family: Inter, Arial, sans-serif;
+      display: flex;
+      flex-direction: column;
+      background: #f9fafb;
+    }
+
+    /* Header */
+    header {
+      padding: 16px 20px;
+      background: #0b6cf2;
+      color: #fff;
+      font-size: 20px;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      box-shadow: 0 2px 6px rgba(0,0,0,.1);
+    }
+
+    /* Sidebar */
+    .sidebar {
+      padding: 20px;
+      background: #fff;
+      overflow-y: auto;
+      max-height: 45vh;
+      box-shadow: 0 2px 6px rgba(0,0,0,.05);
+      border-bottom: 1px solid #eee;
+    }
+    .controls {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+    input[type="text"] {
+      flex: 1;
+      padding: 12px;
+      border: 1px solid #ddd;
+      border-radius: 10px;
+      font-size: 14px;
+    }
+    button {
+      background: #0b6cf2;
+      color: #fff;
+      border: none;
+      padding: 10px 14px;
+      border-radius: 10px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 500;
+      transition: 0.2s ease;
+    }
+    button:hover {
+      background: #0958c7;
+    }
+    button.secondary {
+      background: #f3f4f6;
+      color: #111;
+    }
+    button.secondary:hover {
+      background: #e5e7eb;
+    }
+
+    /* Results styling */
+    .results {
+      margin-top: 14px;
+    }
+    .result {
+      padding: 12px;
+      border-radius: 12px;
+      background: #fdfdfd;
+      margin-bottom: 10px;
+      border: 1px solid #eee;
+      box-shadow: 0 1px 4px rgba(0,0,0,.05);
+      transition: 0.2s;
+    }
+    .result:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 2px 8px rgba(0,0,0,.08);
+    }
+    .result h3 {
+      margin: 0;
+      font-size: 16px;
+      font-weight: 600;
+      color: #0b6cf2;
+    }
+    .result p {
+      margin: 4px 0 0;
+      color: #555;
+      font-size: 13px;
+    }
+    .doctors {
+      margin-top: 10px;
+      background: #f9fafb;
+      padding: 8px;
+      border-radius: 8px;
+      font-size: 13px;
+      border: 1px dashed #ddd;
+    }
+    .doctor {
+      padding: 6px;
+      background: #fff;
+      margin-bottom: 6px;
+      border-radius: 6px;
+      border: 1px solid #eee;
+    }
+
+    /* Directions */
+    .directions {
+      margin-top: 14px;
+      background: #f9fafb;
+      padding: 12px;
+      border-radius: 10px;
+      max-height: 240px;
+      overflow: auto;
+      border: 1px solid #eee;
+    }
+    .directions h4 {
+      margin: 0 0 8px 0;
+      font-size: 14px;
+      color: #333;
+    }
+
+    /* Map */
+    .map-wrap {
+      flex: 1;
+      position: relative;
+    }
+    #map {
+      position: absolute;
+      inset: 0;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    Multiple Cancer Detection — Hospital Maps
+  </header>
+
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="controls">
+      <input id="place-input" type="text" placeholder="🔍 Enter city or address (e.g., Mumbai)" />
+      <button id="search-btn">Search</button>
+    </div>
+
+    <div style="display: flex; gap: 8px; margin-bottom: 12px;">
+      <button class="secondary" id="nearby-btn">📍 Find Nearby</button>
+      <button class="secondary" id="clear-btn">🗑️ Clear</button>
+    </div>
+
+    <div class="results" id="results"></div>
+
+    <div class="directions" id="directions-panel" hidden>
+      <h4>🚗 Directions</h4>
+      <div id="directions-content">Select a hospital and click "Get Directions"</div>
+    </div>
+  </aside>
+
+  <!-- Map -->
+  <main class="map-wrap">
+    <div id="map"></div>
+  </main>
+
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <script>
+    // Initialize map
+    let map = L.map('map').setView([20.5937,78.9629],5);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
+      attribution:'&copy; OpenStreetMap contributors'}).addTo(map);
+
+    const resultsNode=document.getElementById('results');
+    const directionsPanel=document.getElementById('directions-panel');
+    const directionsContent=document.getElementById('directions-content');
+    const hospitalMarkers=[];
+
+    // Predefined hospitals with doctor info
+    const hospitalsData=[
+      {match_name:"Tata Memorial Hospital",city:"Mumbai",doctors:[{name:"Dr. A. Kulkarni",specialty:"Medical Oncologist"},{name:"Dr. S. Mehta",specialty:"Radiation Oncologist"}]},
+      {match_name:"AIIMS",city:"New Delhi",doctors:[{name:"Dr. R. Singh",specialty:"Surgical Oncologist"},{name:"Dr. P. Sharma",specialty:"Medical Oncologist"}]},
+      {match_name:"Apollo",city:"Chennai",doctors:[{name:"Dr. K. Rao",specialty:"Radiation Oncologist"},{name:"Dr. M. Iyer",specialty:"Surgical Oncologist"}]}
+    ];
+
+    // Search button
+    document.getElementById('search-btn').onclick=()=>{
+      const q=document.getElementById('place-input').value;
+      if(!q) return alert('Enter a city or address');
+      fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}`)
+      .then(r=>r.json()).then(data=>{
+        if(data.length===0) return alert('Location not found');
+        const loc=[parseFloat(data[0].lat),parseFloat(data[0].lon)];
+        map.setView(loc,13);
+        findHospitals(loc);
+      });
+    };
+
+    // Nearby button
+    document.getElementById('nearby-btn').onclick=()=>{
+      if(!navigator.geolocation) return alert('Geolocation not supported');
+      navigator.geolocation.getCurrentPosition(pos=>{
+        const loc=[pos.coords.latitude,pos.coords.longitude];
+        map.setView(loc,13);
+        findHospitals(loc);
+      });
+    };
+
+    // Clear button
+    document.getElementById('clear-btn').onclick=()=>{
+      resultsNode.innerHTML='';
+      hospitalMarkers.forEach(m=>map.removeLayer(m));
+      hospitalMarkers.length=0;
+      directionsPanel.hidden=true;
+    };
+
+    // Find cancer hospitals nearby (Overpass API)
+    function findHospitals(loc){
+      resultsNode.innerHTML='Searching hospitals…';
+      const [lat,lon]=loc;
+      const query=`[out:json][timeout:25];node["amenity"="hospital"]["name"~"cancer",i](around:20000,${lat},${lon});out;`;
+      fetch("https://overpass-api.de/api/interpreter",{method:"POST",body:query})
+      .then(r=>r.json()).then(data=>{
+        resultsNode.innerHTML='';
+        if(!data.elements||data.elements.length===0){
+          resultsNode.innerHTML='<div>No cancer hospitals found nearby.</div>';
+          return;
+        }
+        data.elements.forEach(h=>createHospitalEntry(h));
+      });
+    }
+
+    // Create result entry
+    function createHospitalEntry(h){
+      const lat=h.lat,lon=h.lon;
+      const name=h.tags.name||'Unnamed hospital';
+      const addr=h.tags["addr:full"]||`${h.tags["addr:street"]||''} ${h.tags["addr:city"]||''}`;
+      const phone=h.tags.phone||h.tags["contact:phone"]||'';
+      const website=h.tags.website||h.tags["contact:website"]||'';
+      const marker=L.marker([lat,lon]).addTo(map).bindPopup(`<strong>${name}</strong><br>${addr}`);
+      hospitalMarkers.push(marker);
+
+      const div=document.createElement('div');div.className='result';
+      div.innerHTML=`<h3>${name}</h3>
+        <p>${addr}</p>
+        ${phone?`<p>☎️ ${phone}</p>`:''}
+        ${website?`<p><a href="${website}" target="_blank">Website</a></p>`:''}
+        <button>View</button> <button>Get Directions</button>`;
+
+      const matched=matchHospitalDoctors(name);
+      if(matched){
+        const dnode=document.createElement('div');dnode.className='doctors';
+        dnode.innerHTML='<strong>👩‍⚕️ Specialist Doctors</strong>';
+        matched.doctors.forEach(d=>{
+          const dn=document.createElement('div');dn.className='doctor';
+          dn.innerText=d.name+' — '+d.specialty;dnode.appendChild(dn);
+        });
+        div.appendChild(dnode);
+      }
+
+      resultsNode.appendChild(div);
+
+      div.querySelectorAll('button')[0].onclick=()=>{map.setView([lat,lon],15);marker.openPopup();};
+      div.querySelectorAll('button')[1].onclick=()=>getDirections([lat,lon],name);
+    }
+
+    function matchHospitalDoctors(name){
+      name=name.toLowerCase();
+      return hospitalsData.find(h=>name.includes(h.match_name.toLowerCase())||name.includes(h.city.toLowerCase()));
+    }
+
+    // Get directions (OSRM API)
+    function getDirections(dest,name){
+      if(!navigator.geolocation) return alert('Geolocation needed');
+      navigator.geolocation.getCurrentPosition(pos=>{
+        const start=[pos.coords.longitude,pos.coords.latitude];
+        const end=[dest[1],dest[0]];
+        fetch(`https://router.project-osrm.org/route/v1/driving/${start.join(',')};${end.join(',')}?overview=full&geometries=geojson&steps=true`)
+        .then(r=>r.json()).then(data=>{
+          if(data.code!=='Ok'){alert('Routing error');return;}
+          const route=data.routes[0];
+          const coords=route.geometry.coordinates.map(c=>[c[1],c[0]]);
+          if(window.routeLine) map.removeLayer(window.routeLine);
+          window.routeLine=L.polyline(coords,{color:'blue'}).addTo(map);
+          map.fitBounds(window.routeLine.getBounds());
+
+          directionsPanel.hidden=false;
+          let stepsHtml=`<strong>${name}</strong><br>Distance: ${(route.legs[0].distance/1000).toFixed(1)} km, Duration: ${(route.legs[0].duration/60).toFixed(1)} min<ol>`;
+          route.legs[0].steps.forEach(s=>{
+            stepsHtml+=`<li>${s.maneuver.instruction} (${(s.distance/1000).toFixed(2)} km)</li>`;
+          });
+          stepsHtml+='</ol>';
+          directionsContent.innerHTML=stepsHtml;
+        });
+      });
+    }
+  </script>
+</body>
+</html>

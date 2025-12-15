@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Yoga & Diet Plan</title>
+<style>
+  body {
+    font-family: 'Segoe UI', sans-serif;
+    background: url("{{ url_for('static', filename='baground.jpg') }}") no-repeat center center fixed;
+    background-size: cover;
+    margin: 0; padding: 0;
+  }
+  .container {
+    max-width: 1100px;
+    margin: 20px auto;
+    padding: 20px;
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  }
+  h1 {
+    text-align: center;
+    font-size: 34px;
+    color: #333;
+    margin-bottom: 25px;
+  }
+  .cancer-types {
+    display: flex;
+    gap: 20px;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-bottom: 25px;
+  }
+  .cancer-button {
+    width: 200px;
+    padding: 15px;
+    background: #f8f8f8;
+    border: 2px solid #e6cfd4;
+    border-radius: 12px;
+    cursor: pointer;
+    text-align: center;
+    font-weight: bold;
+    font-size: 16px;
+    transition: all 0.3s;
+  }
+  .cancer-button:hover {
+    background: #e6cfd4;
+    color: #fff;
+    transform: translateY(-5px);
+  }
+  .section-box {
+    background: #f9f9f9;
+    border-left: 4px solid #e6cfd4;
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 25px;
+    animation: fadeIn 0.5s forwards;
+  }
+  .section-box h2 {
+    color: #444;
+    margin-top: 0;
+    text-align: center;
+    font-size: 24px;
+  }
+  .yoga-item, .diet-item {
+    background: #fefefe;
+    border: 1px solid #ddd;
+    padding: 12px;
+    margin: 12px 0;
+    border-radius: 10px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+  }
+  .yoga-item iframe {
+    width: 100%;
+    height: 200px;
+    border-radius: 8px;
+    margin: 10px 0;
+  }
+  .yoga-item ul {
+    margin: 0 0 0 20px;
+  }
+  h3 {
+    margin-top: 20px;
+    margin-bottom: 12px;
+    color: #333;
+    font-size: 20px;
+  }
+  @keyframes fadeIn {
+    from {opacity: 0; transform: translateY(20px);}
+    to {opacity: 1; transform: translateY(0);}
+  }
+
+  /* Alarm Section */
+  .alarm-section {
+    background: #f0f8ff;
+    padding: 15px;
+    border-radius: 12px;
+    margin-top: 30px;
+  }
+  .alarm-section h2 {
+    color: #333;
+    margin-bottom: 10px;
+  }
+  .alarm-form {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 15px;
+  }
+  .alarm-form input, .alarm-form button {
+    padding: 10px;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+    font-size: 14px;
+  }
+  .alarm-form button {
+    background: #34526f;
+    color: #fff;
+    cursor: pointer;
+    border: none;
+  }
+  .alarm-form button:hover {
+    background: #274059;
+  }
+  .alarm-list {
+    list-style: none;
+    padding: 0;
+  }
+  .alarm-list li {
+    background: #ffe8f0;
+    padding: 10px;
+    border-radius: 8px;
+    margin-bottom: 8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .alarm-list button {
+    background: #ff4d4d;
+    border: none;
+    color: white;
+    padding: 6px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+  }
+  .alarm-list button:hover {
+    background: #cc0000;
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <h1>🧘 Yoga & Diet Recommendations</h1>
+
+  <!-- Cancer Type Buttons -->
+  <div class="cancer-types" id="cancerTypes"></div>
+
+  <!-- Info Section -->
+  <div id="planSection"></div>
+
+  <!-- Alarm Section -->
+  <div class="alarm-section">
+    <h2>⏰ Set Your Alarms</h2>
+    <form class="alarm-form" id="alarmForm">
+      <input type="time" id="alarmTime" required>
+      <input type="text" id="alarmLabel" placeholder="Label (e.g. Morning Yoga)">
+      <button type="submit">Add Alarm</button>
+    </form>
+    <ul class="alarm-list" id="alarmList"></ul>
+  </div>
+</div>
+
+<!-- Alarm Sound -->
+<audio id="alarmSound" src="{{ url_for('static', filename='sandeep-khare-kase-sartil-saye.m4a') }}" preload="auto"></audio>
+
+<script>
+const cancerPlans = {
+  "Skin Cancer": {
+    "yoga": [
+      ["Pranayama (Anulom-Vilom)", "Helps improve oxygen flow", "n7dDoXEVLU0",
+       ["Boosts lung capacity", "Improves circulation", "Reduces stress", "Enhances focus"]],
+      ["Shavasana", "Reduces stress and promotes relaxation", "Mc-38vuwE1Y",
+       ["Calms nervous system", "Improves sleep", "Relieves fatigue", "Promotes mindfulness"]]
+    ],
+    "diet": [
+      "Eat antioxidant-rich fruits (berries, papaya, oranges)",
+      "Include green leafy vegetables",
+      "Avoid processed foods & sugary drinks",
+      "Drink 8-10 glasses of water daily"
+    ]
+  },
+  "Lung Cancer": {
+    "yoga": [
+      ["Bhujangasana", "Opens chest and lungs", "UYDTHxVh2EE",
+       ["Improves lung function", "Reduces fatigue", "Strengthens back"]],
+      ["Nadi Shodhana", "Balances breathing", "n7dDoXEVLU0",
+       ["Reduces anxiety", "Cleanses respiratory passages", "Improves focus"]]
+    ],
+    "diet": [
+      "Eat cruciferous vegetables (broccoli, cabbage)",
+      "Consume turmeric & ginger for anti-inflammatory effect",
+      "Prefer whole grains",
+      "Avoid fried & oily foods"
+    ]
+  },
+  "Breast Cancer": {
+    "yoga": [
+      ["Setu Bandhasana", "Strengthens back & chest", "hgtfNp8KywM",
+       ["Opens chest area", "Relieves fatigue", "Improves posture"]],
+      ["Meditation", "Calms mind & reduces anxiety", "inpok4MKVLM",
+       ["Increases mindfulness", "Boosts positivity", "Improves sleep quality"]]
+    ],
+    "diet": [
+      "Include flaxseeds & walnuts",
+      "Consume fresh fruits daily",
+      "Avoid alcohol & smoking",
+      "Eat beans & lentils"
+    ]
+  },
+  "Blood Cancer": {
+    "yoga": [
+      ["Viparita Karani", "Improves blood circulation", "xmcDj4Bf--0",
+       ["Relieves fatigue", "Boosts immunity", "Improves sleep"]],
+      ["Balasana (Child’s Pose)", "Relaxes body & mind", "2MJGg-dUKh0",
+       ["Reduces stress", "Calms nervous system", "Boosts energy"]]
+    ],
+    "diet": [
+      "Eat iron-rich foods (spinach, beetroot, pomegranate)",
+      "Consume vitamin-C fruits (orange, amla) to boost immunity",
+      "Include protein-rich foods like eggs, lentils, beans",
+      "Stay hydrated with 8-10 glasses of water daily",
+      "Avoid junk food, excess salt & sugar"
+    ]
+  }
+};
+
+const cancerTypesDiv = document.getElementById("cancerTypes");
+const planSection = document.getElementById("planSection");
+
+// Create cancer type buttons
+Object.keys(cancerPlans).forEach(cancer => {
+  const btn = document.createElement("div");
+  btn.className = "cancer-button";
+  btn.innerText = cancer;
+  btn.onclick = () => showPlan(cancer);
+  cancerTypesDiv.appendChild(btn);
+});
+
+function showPlan(cancer) {
+  planSection.innerHTML = "";
+
+  const box = document.createElement("div");
+  box.className = "section-box";
+
+  const title = document.createElement("h2");
+  title.innerText = `${cancer} Yoga & Diet Plan`;
+  box.appendChild(title);
+
+  // Yoga section
+  const yogaTitle = document.createElement("h3");
+  yogaTitle.innerText = "🧘 Yoga Recommendations";
+  box.appendChild(yogaTitle);
+
+  cancerPlans[cancer]["yoga"].forEach(([pose, desc, videoId, advantages]) => {
+    const ydiv = document.createElement("div");
+    ydiv.className = "yoga-item";
+    const embedUrl = `https://www.youtube.com/embed/${videoId}?rel=0`;
+    let advHtml = "<ul>";
+    advantages.forEach(a => advHtml += `<li>${a}</li>`);
+    advHtml += "</ul>";
+    ydiv.innerHTML = `<strong>${pose}</strong>: ${desc}<br>
+                      <iframe src="${embedUrl}" frameborder="0" allowfullscreen></iframe>${advHtml}`;
+    box.appendChild(ydiv);
+  });
+
+  // Diet section
+  const dietTitle = document.createElement("h3");
+  dietTitle.innerText = "🥗 Diet Recommendations";
+  box.appendChild(dietTitle);
+
+  cancerPlans[cancer]["diet"].forEach(item => {
+    const ddiv = document.createElement("div");
+    ddiv.className = "diet-item";
+    ddiv.innerText = item;
+    box.appendChild(ddiv);
+  });
+
+  planSection.appendChild(box);
+}
+
+// ======================
+// Alarm System
+// ======================
+const alarmForm = document.getElementById("alarmForm");
+const alarmList = document.getElementById("alarmList");
+const alarmSound = document.getElementById("alarmSound");
+
+let alarms = [];
+
+alarmForm.addEventListener("submit", function(e) {
+  e.preventDefault();
+  const time = document.getElementById("alarmTime").value;
+  const label = document.getElementById("alarmLabel").value || "Alarm";
+
+  if (!time) return;
+
+  const alarm = { time, label };
+  alarms.push(alarm);
+  renderAlarms();
+  alarmForm.reset();
+});
+
+function renderAlarms() {
+  alarmList.innerHTML = "";
+  alarms.forEach((alarm, index) => {
+    const li = document.createElement("li");
+    li.innerHTML = `<span>⏰ ${alarm.time} - ${alarm.label}</span>
+                    <button onclick="deleteAlarm(${index})">Delete</button>`;
+    alarmList.appendChild(li);
+  });
+}
+
+function deleteAlarm(index) {
+  alarms.splice(index, 1);
+  renderAlarms();
+}
+
+setInterval(() => {
+  const now = new Date();
+  const current = now.toTimeString().slice(0,5);
+  alarms.forEach(alarm => {
+    if (alarm.time === current) {
+      alarmSound.play();
+      alert(`⏰ Alarm: ${alarm.label}`);
+    }
+  });
+}, 1000);
+</script>
+
+</body>
+</html>

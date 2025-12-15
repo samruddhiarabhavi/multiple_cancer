@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cancer Patient Support Resources</title>
+  <style>
+    body {
+      font-family: 'Arial', sans-serif;
+      background-color: #fff0f5;
+      color: #333;
+      margin: 0;
+      padding: 0;
+    }
+    header {
+      text-align: center;
+      padding: 40px 20px;
+      background: linear-gradient(to right, #ffe6f0, #ccefff);
+    }
+    header h1 { margin: 0; font-size: 2.5em; color: #d63384; }
+    header p { font-size: 1.2em; color: #555; }
+    .container { width: 90%; max-width: 1200px; margin: 40px auto; }
+    .tabs { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 30px; }
+    .tab { flex: 1; padding: 15px; background: #ffe6f0; text-align: center; cursor: pointer; border-radius: 10px; font-weight: bold; transition: background 0.3s, transform 0.2s; }
+    .tab:hover, .tab.active { background: #ffb6c1; transform: translateY(-3px); }
+    .section { display: none; opacity: 0; transition: opacity 0.5s ease-in-out; }
+    .section.active { display: block; opacity: 1; }
+    .card { background: #f0f8ff; border-radius: 12px; padding: 20px; margin: 15px 0; box-shadow: 0 4px 8px rgba(0,0,0,0.1); transition: transform 0.2s, box-shadow 0.2s; }
+    .card:hover { transform: translateY(-5px); box-shadow: 0 8px 16px rgba(0,0,0,0.2); }
+    h2 { color: #d63384; border-bottom: 2px solid #ffb6c1; padding-bottom: 5px; margin-bottom: 15px; }
+    .badge { background-color: #ffb6c1; color: #fff; padding: 3px 8px; border-radius: 5px; font-size: 0.8rem; }
+    a { color: #d63384; text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    input, select, textarea, button { padding: 8px; margin: 5px 0; border-radius: 5px; border: 1px solid #ccc; width: 100%; box-sizing: border-box; }
+    button { background-color: #d63384; color: white; cursor: pointer; border: none; transition: background 0.3s; }
+    button:hover { background-color: #ff66a3; }
+    form { margin-bottom: 30px; }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>🤝 Cancer Patient Support Resources</h1>
+  <p>Find help from donors, government schemes, NGOs, and hospitals.</p>
+</header>
+
+<div class="container">
+
+  <!-- Tabs -->
+  <div class="tabs">
+    <div class="tab active" onclick="showTab('donors', event)">🩸 Donors</div>
+    <div class="tab" onclick="showTab('schemes', event)">🏛 Government Schemes</div>
+    <div class="tab" onclick="showTab('ngos', event)">🌍 NGOs/Trusts</div>
+    <div class="tab" onclick="showTab('hospitals', event)">🏥 Hospitals</div>
+  </div>
+
+  <!-- Donors Section -->
+  <div class="section active" id="donors">
+    <h2>🩸 Available Donors</h2>
+
+    <!-- Register as Donor Form -->
+    <div class="card">
+      <h3>➕ Register Yourself as a Donor</h3>
+      <form id="donorForm">
+        <input type="text" id="name" placeholder="Full Name" required>
+        <select id="blood" required>
+          <option value="">Blood Group</option>
+          <option>A+</option><option>A-</option>
+          <option>B+</option><option>B-</option>
+          <option>O+</option><option>O-</option>
+          <option>AB+</option><option>AB-</option>
+        </select>
+        <input type="text" id="city" placeholder="City/Location" required>
+        <input type="text" id="contact" placeholder="Contact Info (Email/Phone)" required>
+        <input type="text" id="donation" placeholder="What can you donate? (e.g., Blood, ₹ Amount)" required>
+        <button type="submit">Add Me as Donor</button>
+      </form>
+    </div>
+
+    <!-- Existing donors -->
+    <div id="donorList">
+      <div class="card">
+        <h3>Rahul Sharma <span class="badge">O+</span></h3>
+        <p>📍 Pune | 📧 rahul@example.com</p>
+        <p>💝 Donation: ₹2000</p>
+      </div>
+      <div class="card">
+        <h3>Sneha Patil <span class="badge">A-</span></h3>
+        <p>📍 Mumbai | 📧 sneha@example.com</p>
+        <p>💝 Donation: Blood Donation</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Government Schemes Section -->
+  <div class="section" id="schemes">
+    <h2>🏛 Government / Private Schemes for Cancer Patients</h2>
+
+    <form id="schemeForm">
+      <input type="text" id="schemeName" placeholder="Scheme Name" required>
+      <input type="text" id="schemeBenefit" placeholder="Benefit" required>
+      <input type="text" id="schemeApply" placeholder="How to Apply" required>
+      <input type="url" id="schemeLink" placeholder="Link" required>
+      <button type="submit">Add New Scheme</button>
+    </form>
+
+    <div id="schemeList">
+      <div class="card">
+        <h3>Ayushman Bharat (PM-JAY)</h3>
+        <p>💡 <strong>Benefit:</strong> Free treatment up to ₹5 Lakhs per family.</p>
+        <p>📝 Apply using Aadhaar & ration card.</p>
+        <p>🔗 <a href="https://pmjay.gov.in/" target="_blank">Apply</a></p>
+      </div>
+    </div>
+  </div>
+
+  <!-- NGOs Section -->
+  <div class="section" id="ngos">
+    <h2>🌍 NGOs / Trusts Helping Cancer Patients</h2>
+    <input type="text" id="ngoSearch" placeholder="Enter city to find nearby NGOs">
+    <div id="ngoList">
+      <div class="card">
+        <h3>Indian Cancer Society</h3>
+        <p>💡 Provides financial aid, awareness programs & rehabilitation.</p>
+        <p>📍 Mumbai</p>
+      </div>
+      <div class="card">
+        <h3>CanKids Kidscan</h3>
+        <p>💡 Specializes in child cancer support.</p>
+        <p>📍 Delhi</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Hospitals Section -->
+  <div class="section" id="hospitals">
+    <h2>🏥 Major Cancer Hospitals in India</h2>
+    <input type="text" id="hospitalSearch" placeholder="Enter city to find nearby hospitals">
+    <div id="hospitalList">
+      <div class="card">
+        <h3>Tata Memorial Hospital</h3>
+        <p>📍 Mumbai</p>
+      </div>
+      <div class="card">
+        <h3>AIIMS</h3>
+        <p>📍 Delhi</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  function showTab(tabId, event) {
+    const sections = document.querySelectorAll('.section');
+    const tabs = document.querySelectorAll('.tab');
+    sections.forEach(sec => sec.classList.remove('active'));
+    tabs.forEach(t => t.classList.remove('active'));
+    document.getElementById(tabId).classList.add('active');
+    event.currentTarget.classList.add('active');
+  }
+
+  // Add Donor
+  document.getElementById("donorForm").addEventListener("submit", function(e) {
+    e.preventDefault();
+    let name = document.getElementById("name").value;
+    let blood = document.getElementById("blood").value;
+    let city = document.getElementById("city").value;
+    let contact = document.getElementById("contact").value;
+    let donation = document.getElementById("donation").value;
+
+    let donorCard = `<div class="card">
+      <h3>${name} <span class="badge">${blood}</span></h3>
+      <p>📍 ${city} | 📧 ${contact}</p>
+      <p>💝 Donation: ${donation}</p>
+    </div>`;
+    document.getElementById("donorList").innerHTML += donorCard;
+    this.reset();
+  });
+
+  // Add Government/Private Scheme (only in schemes)
+  document.getElementById("schemeForm").addEventListener("submit", function(e) {
+    e.preventDefault();
+    let name = document.getElementById("schemeName").value;
+    let benefit = document.getElementById("schemeBenefit").value;
+    let apply = document.getElementById("schemeApply").value;
+    let link = document.getElementById("schemeLink").value;
+
+    let schemeCard = `<div class="card">
+      <h3>${name}</h3>
+      <p>💡 <strong>Benefit:</strong> ${benefit}</p>
+      <p>📝 ${apply}</p>
+      <p>🔗 <a href="${link}" target="_blank">Apply</a></p>
+    </div>`;
+    document.getElementById("schemeList").innerHTML += schemeCard;
+
+    this.reset();
+  });
+
+  // Search NGOs by city
+  document.getElementById("ngoSearch").addEventListener("keyup", function() {
+    let filter = this.value.toLowerCase();
+    let ngos = document.querySelectorAll("#ngoList .card");
+    ngos.forEach(n => {
+      let text = n.innerText.toLowerCase();
+      n.style.display = text.includes(filter) ? "block" : "none";
+    });
+  });
+
+  // Search Hospitals by city
+  document.getElementById("hospitalSearch").addEventListener("keyup", function() {
+    let filter = this.value.toLowerCase();
+    let hospitals = document.querySelectorAll("#hospitalList .card");
+    hospitals.forEach(h => {
+      let text = h.innerText.toLowerCase();
+      h.style.display = text.includes(filter) ? "block" : "none";
+    });
+  });
+  
+</script>
+
+</body>
+</html>

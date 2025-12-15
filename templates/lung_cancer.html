@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>MULTIPLE CANCER - Lung Cancer Detection</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: url("{{ url_for('static', filename='baground.jpg') }}") no-repeat center center fixed;
+      background-size: cover;
+      color: #333;
+      text-align: center;
+      padding: 50px 20px;
+    }
+
+    h1 {
+      margin-bottom: 40px;
+      font-size: 2.2em;
+      color: #004080;
+    }
+
+    /* ✅ SAME WIDTH FOR BOTH BOXES */
+    .container,
+    .manual-form-container {
+      background: rgba(255,255,255,0.95);
+      padding: 30px;
+      border-radius: 15px;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+      margin: 30px auto;
+      width: 90%;
+      max-width: 900px;   /* ✅ SAME WIDTH APPLIED */
+      transition: transform 0.2s;
+    }
+
+    .container:hover,
+    .manual-form-container:hover {
+      transform: translateY(-5px);
+    }
+
+    .container h2,
+    .manual-form-container h2 {
+      margin-bottom: 15px;
+      color: #007BFF;
+    }
+
+    .container p {
+      font-size: 0.95em;
+      margin-bottom: 15px;
+    }
+
+    input[type="file"], input[type="number"] {
+      margin: 10px 0;
+      padding: 8px;
+      width: 100%;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      font-size: 0.95em;
+    }
+
+    button {
+      padding: 12px 24px;
+      font-size: 1em;
+      background-color: #007BFF;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      margin-top: 10px;
+      width: 100%;
+      transition: background-color 0.2s;
+    }
+
+    button:hover {
+      background-color: #0056b3;
+    }
+
+    #result, #result_structural, #result_manual {
+      margin-top: 20px;
+      font-size: 1.1em;
+    }
+
+    .success { color: green; font-weight: bold; }
+    .warning { color: red; font-weight: bold; }
+
+    /* Manual Form Grid */
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 20px 30px;
+      text-align: left;
+    }
+
+    .form-grid label {
+      font-weight: bold;
+      display: block;
+      margin-bottom: 6px;
+    }
+
+    .form-grid input {
+      width: 100%;
+      padding: 8px 10px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      font-size: 0.95em;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>🩺 MULTIPLE CANCER PREDICTION - Lung Cancer Detection</h1>
+
+  <!-- ✅ X-ray Image Upload -->
+  <div class="container">
+    <h2>📷 X-ray Image Detection</h2>
+    <p>Upload a chest X-ray image to analyze for potential lung cancer.</p>
+    <input type="file" id="fileInputImg" />
+    <button onclick="uploadImage()">Predict from Image</button>
+    <div id="result"></div>
+  </div>
+
+  <!-- ✅ Manual Patient Entry (NOW SAME WIDTH) -->
+  <div class="manual-form-container">
+    <h2>📝 Manual Patient Data Entry</h2>
+
+    <form id="manualForm" class="form-grid">
+      <div><label>Age:<input type="number" name="age" required></label></div>
+      <div><label>Smoking:<input type="number" name="smoking" required></label></div>
+      <div><label>Yellow Fingers:<input type="number" name="yellow_fingers" required></label></div>
+      <div><label>Anxiety:<input type="number" name="anxiety" required></label></div>
+      <div><label>Peer Pressure:<input type="number" name="peer_pressure" required></label></div>
+      <div><label>Chronic Disease:<input type="number" name="chronic_disease" required></label></div>
+      <div><label>Fatigue:<input type="number" name="fatigue" required></label></div>
+      <div><label>Allergy:<input type="number" name="allergy" required></label></div>
+      <div><label>Wheezing:<input type="number" name="wheezing" required></label></div>
+      <div><label>Alcohol Consumption:<input type="number" name="alcohol_consumption" required></label></div>
+      <div><label>Coughing:<input type="number" name="coughing" required></label></div>
+      <div><label>Shortness of Breath:<input type="number" name="shortness_of_breath" required></label></div>
+      <div><label>Swallowing Difficulty:<input type="number" name="swallowing_difficulty" required></label></div>
+      <div><label>Chest Pain:<input type="number" name="chest_pain" required></label></div>
+      <div><label>Weight Loss:<input type="number" name="weight_loss" required></label></div>
+      <div><label>Genetic Risk:<input type="number" name="genetic_risk" required></label></div>
+    </form>
+
+    <button type="button" onclick="submitManual()">Predict from Manual Data</button>
+    <div id="result_manual"></div>
+  </div>
+
+  <script>
+    async function uploadImage() {
+      const fileInput = document.getElementById("fileInputImg");
+      if (!fileInput.files.length) { alert("Select an image first."); return; }
+      const formData = new FormData();
+      formData.append("file", fileInput.files[0]);
+
+      const response = await fetch("/predict", { method: "POST", body: formData });
+      const data = await response.json();
+
+      const resultDiv = document.getElementById("result");
+      if (data.error) { resultDiv.innerHTML = `<p style="color:red;">${data.error}</p>`; return; }
+
+      const extraMsg = (data.prediction === "Cancer Detected")
+        ? `<p class="warning">⚠️ Consult a medical professional immediately.</p>`
+        : `<p class="success">✅ No signs of cancer detected.</p>`;
+
+      resultDiv.innerHTML = `<h3>Prediction: ${data.prediction}</h3><p>Confidence: ${data.confidence}</p>${extraMsg}`;
+    }
+
+    async function submitManual() {
+      const form = document.getElementById("manualForm");
+      const formData = new FormData(form);
+      const data = {};
+      formData.forEach((value, key) => data[key] = Number(value));
+
+      const response = await fetch("/predict_manual", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data)
+      });
+
+      const result = await response.json();
+      const resultDiv = document.getElementById("result_manual");
+
+      if (result.error) { resultDiv.innerHTML = `<p style="color:red;">${result.error}</p>`; return; }
+
+      const extraMsg = (result.prediction === "Cancer Detected")
+        ? `<p class="warning">⚠️ Consult a medical professional immediately.</p>`
+        : `<p class="success">✅ No signs of cancer detected.</p>`;
+
+      resultDiv.innerHTML = `<h3>Prediction: ${result.prediction}</h3><p>Confidence: ${result.confidence}</p>${extraMsg}`;
+    }
+  </script>
+
+</body>
+</html>

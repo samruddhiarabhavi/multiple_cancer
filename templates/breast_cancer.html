@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>MULITPLE CANCER - Breast Cancer Detection</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 30px;
+      background: url("{{ url_for('static', filename='baground.jpg') }}") no-repeat center center fixed;
+      background-size: cover;
+      color: #333;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    h1 {
+      color: royalblue;
+      text-align: center;
+      margin-bottom: 15px;
+    }
+
+    h2 {
+      color: royalblue;
+      margin-bottom: 12px;
+      text-align: center;
+    }
+
+    .section {
+      background-color: rgba(255, 255, 255, 0.9);
+      padding: 20px;
+      border-radius: 12px;
+      margin: 20px auto;
+      width: 90%;
+      max-width: 900px;
+      box-sizing: border-box;
+    }
+
+    input[type="file"], input[type="number"] {
+      margin: 8px 0;
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      font-size: 0.95em;
+    }
+
+    button {
+      margin-top: 15px;
+      padding: 12px 22px;
+      font-size: 1rem;
+      background-color: #007BFF;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.3s;
+      display: block;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    button:hover {
+      background-color: #0056b3;
+    }
+
+    .result {
+      margin-top: 15px;
+      font-size: 1.1em;
+      text-align: center;
+    }
+
+    .success { color: green; font-weight: bold; }
+    .warning { color: orange; font-weight: bold; }
+
+    /* Manual form grid */
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 20px 30px;
+      text-align: left;
+    }
+
+    .form-grid label {
+      font-weight: bold;
+      display: block;
+      margin-bottom: 6px;
+    }
+
+    @media (max-width: 600px) {
+      body { padding: 15px; }
+      button { font-size: 0.9rem; }
+      .section { padding: 15px; }
+    }
+  </style>
+</head>
+<body>
+  <h1>🩺 MULTIPLE CANCER PREDICTION - Breast Cancer Detection</h1>
+
+  <!-- Image Upload -->
+  <div class="section">
+    <h2>📷 Image Detection (CNN)</h2>
+    <p>Upload a breast tissue image (e.g., histopathology) for detection.</p>
+    <input type="file" id="fileInputImg" />
+    <button onclick="uploadImage()">Predict from Image</button>
+    <div id="result_img" class="result"></div>
+  </div>
+
+  <!-- Manual Data Entry -->
+  <div class="section">
+    <h2>📝 Manual Patient Data Entry</h2>
+    <form id="manualForm" class="form-grid">
+      <!-- Mean Features -->
+      <div><label>Radius Mean<input type="number" step="any" name="radius_mean" required></label></div>
+      <div><label>Texture Mean<input type="number" step="any" name="texture_mean" required></label></div>
+      <div><label>Perimeter Mean<input type="number" step="any" name="perimeter_mean" required></label></div>
+      <div><label>Area Mean<input type="number" step="any" name="area_mean" required></label></div>
+      <div><label>Smoothness Mean<input type="number" step="any" name="smoothness_mean" required></label></div>
+      <div><label>Compactness Mean<input type="number" step="any" name="compactness_mean" required></label></div>
+      <div><label>Concavity Mean<input type="number" step="any" name="concavity_mean" required></label></div>
+      <div><label>Concave Points Mean<input type="number" step="any" name="concave points_mean" required></label></div>
+      <div><label>Symmetry Mean<input type="number" step="any" name="symmetry_mean" required></label></div>
+      <div><label>Fractal Dimension Mean<input type="number" step="any" name="fractal_dimension_mean" required></label></div>
+
+      <!-- Worst Features -->
+      <div><label>Radius Worst<input type="number" step="any" name="radius_worst" required></label></div>
+      <div><label>Texture Worst<input type="number" step="any" name="texture_worst" required></label></div>
+      <div><label>Perimeter Worst<input type="number" step="any" name="perimeter_worst" required></label></div>
+      <div><label>Area Worst<input type="number" step="any" name="area_worst" required></label></div>
+      <div><label>Concavity Worst<input type="number" step="any" name="concavity_worst" required></label></div>
+      <div><label>Symmetry Worst<input type="number" step="any" name="symmetry_worst" required></label></div>
+    </form>
+    <button type="button" onclick="submitManual()">Predict from Manual Data</button>
+    <div id="result_manual" class="result"></div>
+  </div>
+
+  <script>
+    // ---------- Image Upload ----------
+    async function uploadImage() {
+      const fileInput = document.getElementById("fileInputImg");
+      if (fileInput.files.length === 0) {
+        alert("Please select an image first.");
+        return;
+      }
+      const formData = new FormData();
+      formData.append("file", fileInput.files[0]);
+
+      const response = await fetch("/predict", { method: "POST", body: formData });
+      const data = await response.json();
+      const resultDiv = document.getElementById("result_img");
+
+      if (data.error) {
+        resultDiv.innerHTML = `<p style="color:red;">${data.error}</p>`;
+      } else {
+        let extraMsg = (data.prediction === "Cancer Detected")
+          ? `<p class="warning">⚠️ Please consult a medical professional.</p>`
+          : `<p class="success">✅ No signs of cancer detected.</p>`;
+        resultDiv.innerHTML = `<h3>Prediction: ${data.prediction}</h3><p>Confidence: ${data.confidence}</p>${extraMsg}`;
+      }
+    }
+
+    // ---------- CSV Upload ----------
+    async function uploadCSV() {
+      const fileInput = document.getElementById("fileInputCSV");
+      if (fileInput.files.length === 0) {
+        alert("Please select a CSV file first.");
+        return;
+      }
+      const formData = new FormData();
+      formData.append("file", fileInput.files[0]);
+
+      const response = await fetch("/predict_structural", { method: "POST", body: formData });
+      const data = await response.json();
+      const resultDiv = document.getElementById("result_csv");
+
+      if (data.error) {
+        resultDiv.innerHTML = `<p style="color:red;">${data.error}</p>`;
+      } else {
+        let table = "<table border='1' style='margin:auto;'><tr><th>Row</th><th>Prediction</th><th>Confidence</th></tr>";
+        data.forEach(row => {
+          table += `<tr><td>${row.row}</td><td>${row.prediction}</td><td>${row.confidence}</td></tr>`;
+        });
+        table += "</table>";
+        resultDiv.innerHTML = table;
+      }
+    }
+
+    // ---------- Manual Form ----------
+    async function submitManual() {
+      const form = document.getElementById("manualForm");
+      const formData = new FormData(form);
+      const data = {};
+      formData.forEach((value, key) => data[key] = Number(value));
+
+      const response = await fetch("/predict_manual", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data)
+      });
+
+      const result = await response.json();
+      const resultDiv = document.getElementById("result_manual");
+
+      if (result.error) {
+        resultDiv.innerHTML = `<p style="color:red;">${result.error}</p>`;
+      } else {
+        let extraMsg = (result.prediction === "Cancer Detected")
+          ? `<p class="warning">⚠️ Please consult a medical professional.</p>`
+          : `<p class="success">✅ No signs of cancer detected.</p>`;
+        resultDiv.innerHTML = `<h3>Prediction: ${result.prediction}</h3><p>Confidence: ${result.confidence}</p>${extraMsg}`;
+      }
+    }
+  </script>
+</body>
+</html>
